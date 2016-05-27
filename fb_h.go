@@ -66,7 +66,7 @@ func init() {
 
 type fb_fix_screeninfo struct {
 	id           [16]byte  // Identification string (e.g.: "TT Builtin")
-	smemstart    uint64    // Physical start address of framebuffer memory.
+	smemstart    uintptr   // Physical start address of framebuffer memory.
 	smemlen      uint32    // Length of framebuffer memory.
 	typ          uint32    // See __TYPE_XXX values.
 	type_aux     uint32    // Interleave for interleaved planes.
@@ -75,7 +75,7 @@ type fb_fix_screeninfo struct {
 	ypanstep     uint16    // Zero if no hardware panning.
 	ywrapstep    uint16    // Zero if no hardware ywrap.
 	line_length  uint32    // Length of a line in bytes.
-	mmio_start   uint64    // Physical start address of mmap'd _IO.
+	mmio_start   uintptr   // Physical start address of mmap'd _IO.
 	mmio_len     uint32    // Length of mmap'd _IO.
 	accel        uint32    // Indicate to driver which specific chip/card we have.
 	capabilities uint16    // See _CAP_XXXX values.
