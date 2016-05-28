@@ -8,20 +8,6 @@ import (
 	"image/color"
 )
 
-var RGB565Model = color.ModelFunc(
-	func(c color.Color) color.Color {
-		if _, ok := c.(RGBColor); ok {
-			return c
-		}
-
-		r, g, b, _ := c.RGBA()
-		return RGBColor{
-			uint8(r>>8) & mask5,
-			uint8(g>>8) & mask6,
-			uint8(b>>8) & mask5,
-		}
-	})
-
 type RGB565 struct {
 	Pix    []byte
 	Rect   image.Rectangle
