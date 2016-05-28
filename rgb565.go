@@ -6,6 +6,7 @@ package framebuffer
 import (
 	"image"
 	"image/color"
+	"unsafe"
 )
 
 type RGB565 struct {
@@ -22,31 +23,23 @@ func (i *RGB565) At(x, y int) color.Color {
 		return RGBColor{}
 	}
 
-	pix := i.Pix[i.PixOffset(x, y):]
-	clr := uint16(pix[0])<<8 | uint16(pix[1])
+	clr := *(*uint16)(unsafe.Pointer(&i.Pix[i.PixOffset(x, y)]))
 
-	return RGBColor{
-		uint8(clr>>11) & mask5,
-		uint8(clr>>6) & mask6,
+	return RGB565Color{
+		uint8((clr >> 11)) & mask5,
+		uint8(clr>>5) & mask6,
 		uint8(clr) & mask5,
 	}
 }
 
 func (i *RGB565) Set(x, y int, c color.Color) {
-	i.SetRGB(x, y, RGB565Model.Convert(c).(RGBColor))
-}
-
-func (i *RGB565) SetRGB(x, y int, c RGBColor) {
 	if !(image.Point{x, y}.In(i.Rect)) {
 		return
 	}
 
-	n := i.PixOffset(x, y)
-	pix := i.Pix[n:]
-	clr := uint16(c.R<<11) | uint16(c.G<<6) | uint16(c.B)
-
-	pix[0] = uint8(clr >> 8)
-	pix[1] = uint8(clr)
+	cc := rgb565Model(c).(RGB565Color)
+	clr := uint16(cc.R)<<11 | uint16(cc.G)<<5 | uint16(cc.B)
+	*(*uint16)(unsafe.Pointer(&i.Pix[i.PixOffset(x, y)])) = clr
 }
 
 func (i *RGB565) PixOffset(x, y int) int {
