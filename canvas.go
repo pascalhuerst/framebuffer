@@ -320,6 +320,9 @@ func (c *Canvas) Image() (draw.Image, error) {
 	case PF_RGBA:
 		return &image.RGBA{Pix: p, Stride: s, Rect: r}, nil
 
+	case PF_RGB:
+		return &RGB{Pix: p, Stride: s, Rect: r}, nil
+
 	case PF_BGRA:
 		return &BGRA{Pix: p, Stride: s, Rect: r}, nil
 

@@ -3,13 +3,12 @@
 
 package framebuffer
 
-import "math"
-
 // List of known image/pixel formats.
 const (
 	PF_UNKNOWN = iota
 	PF_RGBA    // 32-bit color
 	PF_BGRA    // 32-bit color
+	PF_RGB     // 24-bit color
 	PF_RGB_555 // 16-bit color
 	PF_RGB_565 // 16-bit color
 	PF_BGR_555 // 16-bit color
@@ -78,11 +77,14 @@ func (p PixelFormat) Stride() int {
 func (p PixelFormat) Type() int {
 	switch p.Stride() {
 	case 4: // 32-bit color
-		if p.RedShift < p.BlueShift {
-			return PF_BGRA
+		if p.AlphaBits > 0 {
+			if p.RedShift < p.BlueShift {
+				return PF_BGRA
+			}
+			return PF_RGBA
+		} else {
+			return PF_RGB
 		}
-
-		return PF_RGBA
 
 	case 2: // 16-bit color
 		if p.RedShift < p.BlueShift {
