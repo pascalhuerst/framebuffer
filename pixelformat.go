@@ -63,11 +63,14 @@ type PixelFormat struct {
 	BlueShift  uint8 // Shift offset for the blue channel.
 	AlphaBits  uint8 // Bit count for the alpha channel.
 	AlphaShift uint8 // Shift offset for the alpha channel.
+	LineLength int   // Length of the line
+	BitDepth   int   // Bits per Pixel
 }
 
 // Stride returns the width, in bytes, for a single pixel.
 func (p PixelFormat) Stride() int {
-	return int(math.Ceil(float64(p.RedBits+p.GreenBits+p.BlueBits+p.AlphaBits) / 8))
+	return p.BitDepth / 8
+	//return int(math.Ceil(float64(p.RedBits+p.GreenBits+p.BlueBits+p.AlphaBits) / 8))
 }
 
 // Type returns an integer constant from the PF_XXX list, which

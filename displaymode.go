@@ -45,7 +45,7 @@ type DisplayMode struct {
 
 // Stride returns the width, in bytes, for a single row of pixels.
 func (m *DisplayMode) Stride() int {
-	return m.Geometry.XVRes * m.Format.Stride()
+	return m.Format.LineLength
 }
 
 // HFreq returns the horizontal frequency.

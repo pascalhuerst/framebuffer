@@ -446,6 +446,8 @@ func (c *Canvas) CurrentMode() (*DisplayMode, error) {
 	pf.BlueShift = uint8(v.blue.offset)
 	pf.AlphaBits = uint8(v.transparent.length)
 	pf.AlphaShift = uint8(v.transparent.offset)
+	pf.LineLength = int(c.orig_fi.line_length)
+	pf.BitDepth = int(v.bits_per_pixel)
 	dm.Format = pf
 
 	return &dm, nil
