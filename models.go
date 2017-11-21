@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	mask8 = 1<<8 - 1
 	mask5 = 1<<5 - 1
 	mask6 = 1<<6 - 1
 )
@@ -97,3 +98,53 @@ func (c RGB565Color) RGBA() (r, g, b, a uint32) {
 	a = 0xffff
 	return
 }
+
+// RGB image...split file?!
+/*
+func (i *RGB555) At(x, y int) color.Color {
+	if !(image.Point{x, y}.In(i.Rect)) {
+		return RGBColor{}
+	}
+
+	clr := *(*uint16)(unsafe.Pointer(&i.Pix[i.PixOffset(x, y)]))
+
+	return RGB555Color{
+		uint8(clr>>10) & mask5,
+		uint8(clr>>5) & mask5,
+		uint8(clr) & mask5,
+	}
+}
+
+
+type RGB struct {
+	Pix    []byte
+	Rect   image.Rectangle
+	Stride int
+}
+
+func (i *RGB) Bounds() image.Rectangle { return i.Rect }
+func (i *RGB) PixOffset(x, y int) int { return y * i.Stride + x * 4 }
+func (i *RGB) ColorModel() color.Model { return RGBModel }
+func (i *RGB) Set(x, y int, c color.Color) {
+	if !(image.Point{x, y}.In(i.Rect)) { return }
+	o := i.PixOffset(x, y)
+	c1 := color.NRGBAModel.Convert(c).(color.NRGBA)
+	i.Pix[o+0] = c1.B
+	i.Pix[o+1] = c1.G
+	i.Pix[o+2] = c1.R
+}
+
+func (i *RGB) At(x, y int) color.Color {
+	if !(image.Point{x, y}.In(i.Rect)) {
+		return RGBColor{}
+	}
+	o := i.PixOffset(x, y)
+    return RGBColor {
+        i.Pix[o+2] >>16,
+        i.Pix[o+1] >>8,
+        i.Pix[o+0],
+    }
+//	return color.NRGBA{i.Pix[o+2], i.Pix[o+1], i.Pix[o+0], 255}
+}
+
+*/
