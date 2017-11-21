@@ -342,7 +342,7 @@ func (c *Canvas) Image() (draw.Image, error) {
 		return &image.Alpha{Pix: p, Stride: s, Rect: r}, nil
 	}
 
-	return nil, fmt.Errorf("Unsupported pixelformat: %+v", mode.Format)
+	return nil, fmt.Errorf("Unsupported pixelformat %d: %+v", mode.Format.Type(), mode.Format)
 }
 
 // Clear clears (zeroes) the framebuffer memory.
