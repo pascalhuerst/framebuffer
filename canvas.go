@@ -79,7 +79,10 @@ type Canvas struct {
 // mode is actually being used.
 func Open(dm *DisplayMode) (c *Canvas, err error) {
 	c = new(Canvas)
-	c.tty = os.Stdout
+	c.tty, err = os.OpenFile("/dev/tty1", os.O_RDWR, 0)
+	if err != nil {
+		return
+	}
 	c.orig_vt_no = 0
 	c.switch_state = _FB_ACTIVE
 
