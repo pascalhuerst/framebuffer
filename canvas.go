@@ -79,7 +79,7 @@ type Canvas struct {
 // mode is actually being used.
 func Open(dm *DisplayMode) (c *Canvas, err error) {
 	c = new(Canvas)
-	c.tty, err = os.OpenFile("/dev/tty1", os.O_RDWR, 0)
+	c.tty, err = os.OpenFile("/dev/tty2", os.O_RDWR, 0)
 	if err != nil {
 		return
 	}
