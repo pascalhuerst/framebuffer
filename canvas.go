@@ -49,7 +49,6 @@ type Canvas struct {
 
 	// Framebuffer state and access bits.
 	fd           *os.File // Framebuffer file descriptor.
-	tty          *os.File // Current tty.
 	mem          []byte   // mmap'd memory.
 	dev          string   // name of the device we are using.
 	switch_state int      // Current switch state.
@@ -79,7 +78,6 @@ type Canvas struct {
 // mode is actually being used.
 func Open(dm *DisplayMode) (c *Canvas, err error) {
 	c = new(Canvas)
-	c.tty = os.Stdout
 	c.orig_vt_no = 0
 	c.switch_state = _FB_ACTIVE
 
@@ -90,35 +88,7 @@ func Open(dm *DisplayMode) (c *Canvas, err error) {
 		}
 	}()
 
-	// Get VT state
-	var vts vt_stat
-	err = ioctl(c.tty.Fd(), _VT_GETSTATE, unsafe.Pointer(&vts))
-	if err != nil {
-		return
-	}
-
-	// Determine which framebuffer to use.
-	c.dev = os.Getenv("FRAMEBUFFER")
-	if len(c.dev) == 0 {
-		var c2m fb_con2fbmap
-		var fd *os.File
-
-		fd, err = os.OpenFile(fb0, os.O_WRONLY, 0)
-		if err != nil {
-			err = fmt.Errorf("open %q: %v", fb0, err)
-			return
-		}
-
-		c2m.console = uint32(vts.v_active)
-		err = ioctl(fd.Fd(), _IOGET_CON2FBMAP, unsafe.Pointer(&c2m))
-		fd.Close()
-
-		if err != nil {
-			return
-		}
-
-		c.dev = fmt.Sprintf(fbnr, c2m.framebuffer)
-	}
+	c.dev = "/dev/fb1"
 
 	// Open the frame buffer.
 	c.fd, err = os.OpenFile(c.dev, os.O_RDWR, 0)
@@ -156,18 +126,6 @@ func Open(dm *DisplayMode) (c *Canvas, err error) {
 		}
 	}
 
-	// Get KD mode
-	err = ioctl(c.tty.Fd(), _KDGETMODE, unsafe.Pointer(&c.orig_kd))
-	if err != nil {
-		return
-	}
-
-	// Get original vt mode
-	err = ioctl(c.tty.Fd(), _VT_GETMODE, unsafe.Pointer(&c.orig_vt))
-	if err != nil {
-		return
-	}
-
 	// Set display mode.
 	err = c.setMode(dm)
 	if err != nil {
@@ -177,18 +135,6 @@ func Open(dm *DisplayMode) (c *Canvas, err error) {
 	// Fetch original fixed buffer information (again).
 	err = ioctl(c.fd.Fd(), _IOGET_FSCREENINFO, unsafe.Pointer(&c.orig_fi))
 	if err != nil {
-		return
-	}
-
-	// Ensure we are in PACKED_PIXELS mode. Others are useless to us.
-	if c.orig_fi.typ != _TYPE_PACKED_PIXELS {
-		err = errors.New("Canvas.Open: Framebuffer is not in PACKED PIXELS mode. Unable to continue.")
-		return
-	}
-
-	// If we have a non-standard pixel format, we can't continue.
-	if c.orig_vi.nonstd != 0 {
-		err = errors.New("Canvas.Open: Framebuffer uses a non-standard pixel format. This is not supported.")
 		return
 	}
 
@@ -214,18 +160,6 @@ func Open(dm *DisplayMode) (c *Canvas, err error) {
 		if err != nil {
 			return
 		}
-	}
-
-	// Switch terminal to graphics mode.
-	err = ioctl(c.tty.Fd(), _KDSETMODE, _KD_GRAPHICS)
-	if err != nil {
-		return
-	}
-
-	// Activate the given tty.
-	err = c.activateCurrent(c.tty)
-	if err != nil {
-		return
 	}
 
 	// Clear screen
@@ -264,31 +198,6 @@ func (c *Canvas) Close() (err error) {
 	skip_fd:
 		c.fd.Close()
 		c.fd = nil
-	}
-
-	if c.tty != nil {
-		err = ioctl(c.tty.Fd(), _KDSETMODE, c.orig_kd)
-		if err != nil {
-			goto skip_tty
-		}
-
-		err = ioctl(c.tty.Fd(), _VT_SETMODE, unsafe.Pointer(&c.orig_vt))
-		if err != nil {
-			goto skip_tty
-		}
-
-		if c.orig_vt_no > 0 {
-			err = ioctl(c.tty.Fd(), _VT_ACTIVATE, c.orig_vt_no)
-			if err != nil {
-				goto skip_tty
-			}
-
-			err = ioctl(c.tty.Fd(), _VT_WAITACTIVE, c.orig_vt_no)
-		}
-
-	skip_tty:
-		//c.tty.Close() // Don't close stdout
-		c.tty = nil
 	}
 
 	return
@@ -553,27 +462,6 @@ func (c *Canvas) SetPalette(pal color.Palette) error {
 	}
 
 	return nil
-}
-
-func (c *Canvas) switchAcquire() {
-	ioctl(c.tty.Fd(), _VT_RELDISP, _VT_ACKACQ)
-	c.switch_state = _FB_ACTIVE
-}
-
-func (c *Canvas) switchRelease() {
-	ioctl(c.tty.Fd(), _VT_RELDISP, 1)
-	c.switch_state = _FB_INACTIVE
-}
-
-func (c *Canvas) switchInit() error {
-	var vm vt_mode
-
-	vm.mode = _VT_PROCESS
-	vm.waitv = 0
-	vm.relsig = int16(syscall.SIGUSR1)
-	vm.acqsig = int16(syscall.SIGUSR2)
-
-	return ioctl(c.tty.Fd(), _VT_SETMODE, unsafe.Pointer(&vm))
 }
 
 // pollSignals polls for user signals.
